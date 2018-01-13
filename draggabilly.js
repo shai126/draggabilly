@@ -184,8 +184,8 @@ proto.dispatchEvent = function( type, event, args ) {
 // get x/y position from style
 proto._getPosition = function() {
   var style = getComputedStyle( this.element );
-  var x = this._getPositionCoord( style.left, 'width' );
-  var y = this._getPositionCoord( style.top, 'height' );
+  var x = this._getPositionCoord( style, 'left', 'width' );
+  var y = this._getPositionCoord( style, 'top', 'height' );
   // clean up 'auto' or other non-integer values
   this.position.x = isNaN( x ) ? 0 : x;
   this.position.y = isNaN( y ) ? 0 : y;
@@ -193,7 +193,12 @@ proto._getPosition = function() {
   this._addTransformPosition( style );
 };
 
-proto._getPositionCoord = function( styleSide, measure ) {
+proto._getPositionCoord = function( style, side, measure ) {
+  var styleSide = style[side];
+  if (side === 'left' && styleSide === 'auto') {
+    return this.element.getBoundingClientRect().left;
+// very half-arsed fix, but good enough for us for now. basically, if the element has right but not left defined, then left returns 'auto' in some browsers (incl Safari) instead of the current left value. so we hack an approximation for left here. this is relative to the viewport, which is usually wrong, but works for us right now. in real life would also add something for bottom/top.
+  }
   if ( styleSide.indexOf('%') != -1 ) {
     // convert percent into pixel for Safari, #75
     var parentSize = getSize( this.element.parentNode );
